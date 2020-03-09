@@ -1,0 +1,5 @@
+.DS_Store
+yarn.lock
+**/out
+**/.history
+**/node_modules

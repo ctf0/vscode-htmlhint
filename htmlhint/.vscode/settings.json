@@ -8,7 +8,5 @@
 		"out": true,
 		"bin": true
 	},
-	"files.trimTrailingWhitespace": true,
-	"editor.insertSpaces": false,
-	"editor.tabSize": 4
+	"files.trimTrailingWhitespace": true
 }

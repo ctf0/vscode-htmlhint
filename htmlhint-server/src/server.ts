@@ -9,14 +9,15 @@
 import * as path from 'path';
 import * as server from 'vscode-languageserver';
 import * as htmlhint from 'htmlhint';
-import fs = require('fs');
-let stripJsonComments: any = require('strip-json-comments');
+const fs = require('fs');
+const stripJsonComments: any = require('strip-json-comments');
 
 interface Settings {
     htmlhint: {
         enable: boolean;
         options: any;
-    }
+        optionsFile: string;
+    },
     [key: string]: any;
 }
 
@@ -82,6 +83,9 @@ function getConfiguration(filePath: string): any {
     if (settings.htmlhint && settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
         options = settings.htmlhint.options;
     }
+    else if (settings.htmlhint && settings.htmlhint.optionsFile) {
+        options = loadConfigurationFile(settings.htmlhint.optionsFile)
+    }
     else {
         options = findConfigForHtmlFile(filePath);
     }
@@ -144,8 +148,9 @@ function getErrorMessage(err: any, document: server.TextDocument): string {
     if (typeof err.message === 'string' || err.message instanceof String) {
         result = <string>err.message;
     } else {
-        result = `An unknown error occured while validating file: ${server.Files.uriToFilePath(document.uri)}`;
+        result = <string>`An unknown error occurred while validating file: ${server.Files.uriToFilePath(document.uri)}`;
     }
+
     return result;
 }
 
@@ -239,7 +244,6 @@ documents.onDidChangeContent((event) => {
 // The VS Code htmlhint settings have changed. Revalidate all documents.
 connection.onDidChangeConfiguration((params) => {
     settings = params.settings;
-
 
     validateAllTextDocuments(connection, documents.all());
 });

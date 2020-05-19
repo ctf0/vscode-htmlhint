@@ -11,6 +11,8 @@ import * as server from 'vscode-languageserver';
 import * as htmlhint from 'htmlhint';
 const fs = require('fs');
 const stripJsonComments: any = require('strip-json-comments');
+let connection: server.IConnection = server.createConnection(process.stdin, process.stdout);
+let documents: server.TextDocuments = new server.TextDocuments();
 
 interface Settings {
     htmlhint: {
@@ -156,6 +158,7 @@ function getErrorMessage(err: any, document: server.TextDocument): string {
 
 function validateAllTextDocuments(connection: server.IConnection, documents: server.TextDocument[]): void {
     let tracker = new server.ErrorMessageTracker();
+
     documents.forEach(document => {
         try {
             validateTextDocument(connection, document);
@@ -174,38 +177,9 @@ function validateTextDocument(connection: server.IConnection, document: server.T
     }
 }
 
-let connection: server.IConnection = server.createConnection(process.stdin, process.stdout);
-let documents: server.TextDocuments = new server.TextDocuments();
-documents.listen(connection);
-
 function trace(message: string, verbose?: string): void {
     connection.tracer.log(message, verbose);
 }
-
-connection.onInitialize((params: server.InitializeParams, token: server.CancellationToken) => {
-    let rootFolder = params.rootPath;
-    let initOptions: {
-        nodePath: string;
-    } = params.initializationOptions;
-    let nodePath = initOptions ? (initOptions.nodePath ? initOptions.nodePath : undefined) : undefined;
-
-    const result = server.Files.resolveModule2(rootFolder, 'htmlhint', nodePath, trace).
-        then((value): server.InitializeResult | server.ResponseError<server.InitializeError> => {
-            linter = value.default || value.HTMLHint || value;
-            //connection.window.showInformationMessage(`onInitialize() - found local htmlhint (version ! ${value.HTMLHint.version})`);
-
-            let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
-            return result;
-        }, (error) => {
-            // didn't find htmlhint in project or global, so use embedded version.
-            linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
-            //connection.window.showInformationMessage(`onInitialize() using embedded htmlhint(version ! ${linter.version})`);
-            let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
-            return result;
-        });
-
-    return result as Thenable<server.InitializeResult>;
-});
 
 function doValidate(connection: server.IConnection, document: server.TextDocument): void {
     try {
@@ -213,9 +187,7 @@ function doValidate(connection: server.IConnection, document: server.TextDocumen
         let fsPath = server.Files.uriToFilePath(uri);
         let contents = document.getText();
         let lines = contents.split('\n');
-
         let config = getConfiguration(fsPath);
-
         let errors: htmlhint.Error[] = linter.verify(contents, config);
 
         let diagnostics: server.Diagnostic[] = [];
@@ -241,6 +213,29 @@ documents.onDidChangeContent((event) => {
     validateTextDocument(connection, event.document);
 });
 
+connection.onInitialize((params: server.InitializeParams, token: server.CancellationToken) => {
+    let rootFolder = params.rootPath;
+    let initOptions: {nodePath: string;} = params.initializationOptions;
+    let nodePath = initOptions ? (initOptions.nodePath ? initOptions.nodePath : undefined) : undefined;
+
+    const result = server.Files.resolveModule2(rootFolder, 'htmlhint', nodePath, trace)
+        .then((value): server.InitializeResult | server.ResponseError<server.InitializeError> => {
+            linter = value.default || value.HTMLHint || value;
+            //connection.window.showInformationMessage(`onInitialize() - found local htmlhint (version ! ${value.HTMLHint.version})`);
+
+            let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
+            return result;
+        }, (error) => {
+            // didn't find htmlhint in project or global, so use embedded version.
+            linter = htmlhint.default || htmlhint.HTMLHint || htmlhint;
+            //connection.window.showInformationMessage(`onInitialize() using embedded htmlhint(version ! ${linter.version})`);
+            let result: server.InitializeResult = { capabilities: { textDocumentSync: documents.syncKind } };
+            return result;
+        });
+
+    return result as Thenable<server.InitializeResult>;
+});
+
 // The VS Code htmlhint settings have changed. Revalidate all documents.
 connection.onDidChangeConfiguration((params) => {
     settings = params.settings;
@@ -253,7 +248,9 @@ connection.onDidChangeWatchedFiles((params) => {
     for (var i = 0; i < params.changes.length; i++) {
         htmlhintrcOptions[server.Files.uriToFilePath(params.changes[i].uri)] = undefined;
     }
+
     validateAllTextDocuments(connection, documents.all());
 });
 
+documents.listen(connection);
 connection.listen();

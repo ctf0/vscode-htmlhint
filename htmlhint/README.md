@@ -12,7 +12,7 @@ based on https://github.com/microsoft/vscode-htmlhint + new features
 
 Integrates the [HTMLHint](https://github.com/htmlhint/HTMLHint) static analysis tool into Visual Studio Code.
 
-![hero](https://user-images.githubusercontent.com/7388088/76229854-87390c00-622b-11ea-80d7-025e33b32300.png)
+The HTMLHint extension will attempt to use the locally installed HTMLHint module (the project-specific module if present, or a globally installed HTMLHint module).  If a locally installed HTMLHint isn't available, the extension will use the embedded version (current version 0.11.0).
 
 The extension will attempt to use the locally installed HTMLHint module, otherwise the extension will use the embedded version (current version 0.11.0).
 
@@ -77,3 +77,32 @@ if you'd like to use the HTMLHint extension with additional file types, then use
   ]
 }
 ```
+
+## Settings
+
+The HTMLHint extension provides these [settings](https://code.visualstudio.com/docs/customization/userandworkspace):
+
+* `htmlhint.enable` - disable the HTMLHint extension globally or per workspace.
+* `htmlhint.documentSelector` - specify additional language services to be linted
+* `htmlhint.options` - provide a rule set to override on disk `.htmlhintrc` or HTMLHint defaults.
+* `htmlhint.configFile` - specify a custom HTMLHint configuration file. Please specify either 'htmlhint.configFile' or 'htmlhint.options', but not both.
+
+You can change settings globally (**File** > **Preferences** > **User Settings**) or per workspace (**File** > **Preferences** > **Workspace Settings**). The **Preferences** menu is under **Code** on macOS.
+
+Here's an example using the `htmlhint.documentSelector` and `htmlhint.options` settings:
+
+```json
+"htmlhint.documentSelector: [
+    "html",
+    "htm",
+    "twig"
+],
+"htmlhint.options": {
+    "tagname-lowercase": false,
+    "attr-lowercase": true,
+    "attr-value-double-quotes":  true,
+    "doctype-first": true
+}
+```
+
+Note that in order to have the linter apply to addi

@@ -6,9 +6,9 @@
 /// <reference path="typings/node/node.d.ts" />
 /// <reference path="typings/htmlhint/htmlhint.d.ts" />
 
+import * as htmlhint from 'htmlhint';
 import * as path from 'path';
 import * as server from 'vscode-languageserver';
-import * as htmlhint from 'htmlhint';
 const fs = require('fs');
 const stripJsonComments: any = require('strip-json-comments');
 let connection: server.IConnection = server.createConnection(process.stdin, process.stdout);
@@ -16,6 +16,7 @@ let documents: server.TextDocuments = new server.TextDocuments();
 
 interface Settings {
     htmlhint: {
+        configFile: string;
         enable: boolean;
         options: any;
         optionsFile: string;
@@ -82,13 +83,23 @@ function makeDiagnostic(problem: htmlhint.Error, lines: string[]): server.Diagno
  */
 function getConfiguration(filePath: string): any {
     var options: any;
-    if (settings.htmlhint && settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
-        options = settings.htmlhint.options;
-    }
-    else if (settings.htmlhint && settings.htmlhint.optionsFile) {
-        options = loadConfigurationFile(settings.htmlhint.optionsFile)
-    }
-    else {
+    if (settings.htmlhint) {
+        if (settings.htmlhint.configFile && settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
+            throw new Error(`The configuration settings for HTMLHint are invalid. Please specify either 'htmlhint.configFile' or 'htmlhint.options', but not both.`);
+        }
+        if (settings.htmlhint.configFile) {
+            if (fs.existsSync(settings.htmlhint.configFile)) {
+                options = loadConfigurationFile(settings.htmlhint.configFile)
+            } else {
+                const configFileHint = !path.isAbsolute(settings.htmlhint.configFile) ? ` (resolves to '${path.resolve(settings.htmlhint.configFile)}')` : '';
+                throw new Error(`The configuration settings for HTMLHint are invalid. The file '${settings.htmlhint.configFile}'${configFileHint} specified in 'htmlhint.configFile' could not be found.`);
+            }
+        } else if (settings.htmlhint.options && Object.keys(settings.htmlhint.options).length > 0) {
+            options = settings.htmlhint.options;
+        } else {
+            options = findConfigForHtmlFile(filePath);
+        }
+    } else {
         options = findConfigForHtmlFile(filePath);
     }
 
@@ -177,7 +188,14 @@ function validateTextDocument(connection: server.IConnection, document: server.T
     }
 }
 
-function trace(message: string, verbose?: string): void {
+<<<<<<< HEAD
+=======
+let connection: server.IConnection = server.createConnection();
+let documents: server.TextDocuments = new server.TextDocuments();
+documents.listen(connection);
+
+>>>>>>> f676ec3bddf38e455d163f126a4c335daf1c39f1
+function trace(message: string, verbose ?: string): void {
     connection.tracer.log(message, verbose);
 }
 

@@ -1,11 +1,24 @@
 {
-    "name": "htmlhint",
+    "name": "HTMLHint",
     "displayName": "HTMLHint",
     "description": "VS Code integration for HTMLHint - A Static Code Analysis Tool for HTML",
-    "icon": "images/HTMLHint.png",
-    "version": "0.0.1",
-    "publisher": "ctf0",
-    "repository": "https://github.com/ctf0/vscode-htmlhint/tree/master/htmlhint",
+    "icon": "HTMLHint.png",
+    "version": "0.10.0",
+    "publisher": "mkaufman",
+    "galleryBanner": {
+        "color": "#0000FF",
+        "theme": "dark"
+    },
+    "license": "SEE LICENSE IN LICENSE.md",
+    "bugs": {
+        "url": "https://github.com/Microsoft/vscode-htmlhint/issues",
+        "email": "mkaufman@microsoft.com"
+    },
+    "homepage": "https://github.com/Microsoft/vscode-htmlhint/blob/master/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Microsoft/vscode-htmlhint.git"
+    },
     "categories": [
         "Programming Languages",
         "Linters"
@@ -14,43 +27,29 @@
         "vscode": "^1.16.0"
     },
     "activationEvents": [
-        "onFileSystem:file"
+        "onLanguage:html"
     ],
     "main": "./out/extension",
-    "contributes": {
-        "configuration": {
+    "contributes": "{\n    \"configuration\": {\n      \"type\": \"object\"",
+    "title": "HTML-Hint configuration",
+    "properties": {
+        "htmlhint.enable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Control whether htmlhint is enabled for HTML files or not."
+        },
+        "htmlhint.documentSelector": {
+            "type": "array",
+            "default": [
+                "html",
+                "htm"
+            ],
+            "description": "The associated document types to be linted."
+        },
+        "htmlhint.options": {
             "type": "object",
-            "title": "HTML-Hint configuration",
-            "properties": {
-                "htmlhint.enable": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Control whether htmlhint is enabled for HTML files or not."
-                },
-                "htmlhint.documentSelector": {
-                    "type": "array",
-                    "default": [
-                        "html",
-                        "blade",
-                        "vue",
-                        "twig"
-                    ],
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "The associated document types to be linted."
-                },
-                "htmlhint.options": {
-                    "type": "object",
-                    "default": {},
-                    "description": "The htmlhint options object to provide args to the htmlhint command."
-                },
-                "htmlhint.optionsFile": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The htmlhint options config file path"
-                }
-            }
+            "default": {},
+            "description": "The htmlhint options object to provide args to the htmlhint command."
         }
     },
     "scripts": {
